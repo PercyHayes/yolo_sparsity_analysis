@@ -114,7 +114,27 @@ hardware_sim/
 
 ## Usage Examples
 
-### 1. Profile Operation Sparsity
+### 1. Analyze Weight Sparsity
+```python
+# Edit weight_sparsity.py to set root_path, expect full extract weight file
+root_path = "/path/to/model/directory"
+output_csv = "weight_sparsity_stats.csv"
+
+# Run the analysis
+python weight_sparsity.py
+```
+
+### 2. Analyze LIF Output Sparsity
+```python
+# Edit lif_sparsity.py to set root_path, expect full extract weight file
+root_path = "/path/to/model/directory"
+output_csv = "lif_sparsity_stats.csv"
+
+# Run the analysis
+python lif_sparsity.py
+```
+
+### 3. Profile Operation Sparsity
 ```python
 # Edit ProfileSparsity.py to set your data paths and parameters
 in_channels = 256
@@ -127,26 +147,59 @@ width = 160
 
 # Run the analysis
 python ProfileSparsity.py
-```
 
-### 2. Analyze Weight Sparsity
-```python
-# Edit weight_sparsity.py to set root_path, expect full extract weight file
-root_path = "/path/to/model/directory"
-output_csv = "weight_sparsity_stats.csv"
+# example output:
+'''
+=============================profile sparsity start======================================
+=============================analyze the sparsity of weights start======================================
+weights shape: (64, 256, 3, 3)
+sparsity of weights: 0.5732082790798612
+=============================analyze the sparsity of weights done======================================
 
-# Run the analysis
-python weight_sparsity.py
-```
 
-### 3. Analyze LIF Output Sparsity
-```python
-# Edit lif_sparsity.py to set root_path, expect full extract weight file
-root_path = "/path/to/model/directory"
-output_csv = "lif_sparsity_stats.csv"
+=============================analyze the sparsity of data start======================================
+data shape: (256, 96, 160)
+sparsity of data: 0.8836290995279948
+equal to 1 of data: 0.09004414876302083
+equal to 2 of data: 0.018624623616536457
+equal to 3 of data: 0.0077021280924479164
+=============================analyze the sparsity of data done======================================
 
-# Run the analysis
-python lif_sparsity.py
+
+=============================group size = 8======================================
+============compare with reference result=============
+group size = 8, max_diff: 0.0, mean_diff: 0.0, max_relative_diff: 0.0
+skip_recordings: [1747835.   50853.]
+total_do_compute_count: 276480
+level1 (128 -> 16)    skipped operation rate: 0.3951088234230324
+level2 (16 -> 2)      skipped operation rate: 0.09196506076388888
+
+
+=============================group size = 4======================================
+============compare with reference result=============
+group size = 4, max_diff: 0.0, mean_diff: 0.0, max_relative_diff: 0.0
+skip_recordings: [5500545. 1030610.   56081.]
+total_do_compute_count: 276480
+level1 (128 -> 32)    skipped operation rate: 0.6217159695095487
+level2 (32 -> 8)      skipped operation rate: 0.46595142505787035
+level3 (8 -> 2)       skipped operation rate: 0.10141963252314815
+
+
+=============================group size = 2======================================
+============compare with reference result=============
+group size = 2, max_diff: 0.0, mean_diff: 0.0, max_relative_diff: 0.0
+skip_recordings: [13869005.  7204140.  2993434.  1064750.   304965.    72619.]
+total_do_compute_count: 276480
+level1 (128 -> 64)    skipped operation rate: 0.7837934140805844
+level2 (64 -> 32)     skipped operation rate: 0.81427001953125
+level3 (32 -> 16)     skipped operation rate: 0.6766841182002314
+level4 (16 -> 8)      skipped operation rate: 0.4813865379050926
+level5 (8 -> 4)       skipped operation rate: 0.2757568359375
+level6 (4 -> 2)       skipped operation rate: 0.1313277633101852
+
+
+=============================profile sparsity done======================================
+'''
 ```
 
 ## Key Concepts
