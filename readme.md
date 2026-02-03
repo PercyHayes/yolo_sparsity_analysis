@@ -116,6 +116,12 @@ hardware_sim/
 
 ### 1. Analyze Weight Sparsity
 ```python
+# if weights are stored as [-a, 0, a], edit load_weights:
+zero_count = np.sum(weights == 0)
+one_count = np.sum(weights > 0)
+negative_one_count = np.sum(weights < 0)
+
+
 # Edit weight_sparsity.py to set root_path, expect full extract weight file
 root_path = "/path/to/model/directory"
 output_csv = "weight_sparsity_stats.csv"
@@ -145,6 +151,9 @@ padding = 1
 height = 96
 width = 160
 
+# if weights are stored as [-a, 0, a], uncomment the code of line 181
+# weights = np.where(weights > 0, 1, np.where(weights < 0, -1, 0))
+
 # Run the analysis
 python ProfileSparsity.py
 
@@ -153,49 +162,49 @@ python ProfileSparsity.py
 =============================profile sparsity start======================================
 =============================analyze the sparsity of weights start======================================
 weights shape: (64, 256, 3, 3)
-sparsity of weights: 0.5732082790798612
+sparsity of weights: 0.5226372612847222
 =============================analyze the sparsity of weights done======================================
 
 
 =============================analyze the sparsity of data start======================================
 data shape: (256, 96, 160)
-sparsity of data: 0.8836290995279948
-equal to 1 of data: 0.09004414876302083
-equal to 2 of data: 0.018624623616536457
-equal to 3 of data: 0.0077021280924479164
+sparsity of data: 0.8386604309082031
+equal to 1 of data: 0.1211212158203125
+equal to 2 of data: 0.02939580281575521
+equal to 3 of data: 0.010822550455729166
 =============================analyze the sparsity of data done======================================
 
 
 =============================group size = 8======================================
 ============compare with reference result=============
 group size = 8, max_diff: 0.0, mean_diff: 0.0, max_relative_diff: 0.0
-skip_recordings: [1747835.   50853.]
+skip_recordings: [1172037.   23737.]
 total_do_compute_count: 276480
-level1 (128 -> 16)    skipped operation rate: 0.3951088234230324
-level2 (16 -> 2)      skipped operation rate: 0.09196506076388888
+level1 (128 -> 16)    skipped operation rate: 0.26494615342881944
+level2 (16 -> 2)      skipped operation rate: 0.0429271556712963
 
 
 =============================group size = 4======================================
 ============compare with reference result=============
 group size = 4, max_diff: 0.0, mean_diff: 0.0, max_relative_diff: 0.0
-skip_recordings: [5500545. 1030610.   56081.]
+skip_recordings: [4517862.  726536.   27773.]
 total_do_compute_count: 276480
-level1 (128 -> 32)    skipped operation rate: 0.6217159695095487
-level2 (32 -> 8)      skipped operation rate: 0.46595142505787035
-level3 (8 -> 2)       skipped operation rate: 0.10141963252314815
+level1 (128 -> 32)    skipped operation rate: 0.5106452094184027
+level2 (32 -> 8)      skipped operation rate: 0.32847583912037037
+level3 (8 -> 2)       skipped operation rate: 0.05022605613425926
 
 
 =============================group size = 2======================================
 ============compare with reference result=============
 group size = 2, max_diff: 0.0, mean_diff: 0.0, max_relative_diff: 0.0
-skip_recordings: [13869005.  7204140.  2993434.  1064750.   304965.    72619.]
+skip_recordings: [12571576.  6557511.  2498672.   768944.   187755.    41892.]
 total_do_compute_count: 276480
-level1 (128 -> 64)    skipped operation rate: 0.7837934140805844
-level2 (64 -> 32)     skipped operation rate: 0.81427001953125
-level3 (32 -> 16)     skipped operation rate: 0.6766841182002314
-level4 (16 -> 8)      skipped operation rate: 0.4813865379050926
-level5 (8 -> 4)       skipped operation rate: 0.2757568359375
-level6 (4 -> 2)       skipped operation rate: 0.1313277633101852
+level1 (128 -> 64)    skipped operation rate: 0.7104704680266204
+level2 (64 -> 32)     skipped operation rate: 0.7411827935112847
+level3 (32 -> 16)     skipped operation rate: 0.5648401331018519
+level4 (16 -> 8)      skipped operation rate: 0.3476490162037037
+level5 (8 -> 4)       skipped operation rate: 0.1697726779513889
+level6 (4 -> 2)       skipped operation rate: 0.07575954861111112
 
 
 =============================profile sparsity done======================================

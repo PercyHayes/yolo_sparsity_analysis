@@ -13,8 +13,8 @@ def do_conv_torch(data, weights, out_channels, in_channels, kernel_size, stride,
     '''
     do convolution with torch, used for reference
     '''
-    data = torch.from_numpy(data).unsqueeze(0)
-    weights = torch.from_numpy(weights)
+    data = torch.from_numpy(data).unsqueeze(0).float()
+    weights = torch.from_numpy(weights).float()
     
     result = F.conv2d(data, weights, bias=None, stride=stride, padding=padding)
     return result.numpy()
@@ -167,16 +167,18 @@ if __name__ == "__main__":
     #width = 80
 
     # load data
-    data_path = './extract_data/step13_conv/input_001.txt'
-    #'/9950backfile/liguoqi/gsw/HD/SpikeYolo/refs/SpikeYolo_TWN/inference_data_TWN_bn_fused/model/model/4_SNN-Block1/0/step12-13_conv2/step13_conv/input_001.txt'
+    data_path = './extract_data/conv/input_001.txt'
+    #'./extract_data/step13_conv/input_001.txt'
     #'./extract_data/step13_conv/input_001.txt'
     data = load_data(data_path, (in_channels, height, width))
     
 
-    weight_Path = './extract_data/step13_conv/weights.txt'
-    #'/9950backfile/liguoqi/gsw/HD/SpikeYolo/refs/SpikeYolo_TWN/inference_data_TWN_bn_fused/model/model/4_SNN-Block1/0/step12-13_conv2/step13_conv/weights.txt'
+    weight_Path = './extract_data/conv/weights.txt'
+    #'./extract_data/step13_conv/weights.txt'
     #'./extract_data/step13_conv/weights.txt'
     weights = load_data(weight_Path, (out_channels, in_channels, kernel_size, kernel_size))
+    # mapping weights to -1, 0, 1
+    # weights = np.where(weights > 0, 1, np.where(weights < 0, -1, 0))
 
     # analyze the sparsity of weights
     print("=============================analyze the sparsity of weights start======================================")

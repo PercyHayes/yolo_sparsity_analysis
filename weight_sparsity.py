@@ -32,8 +32,8 @@ def load_weights(txt_path):
     
     # 统计各种权重的数量
     zero_count = np.sum(weights == 0)
-    one_count = np.sum(weights == 1)
-    negative_one_count = np.sum(weights == -1)
+    one_count = np.sum(weights > 0)
+    negative_one_count = np.sum(weights < 0)
     
     # 计算占比
     sparsity = zero_count / num_parameters if num_parameters > 0 else 0.0
@@ -163,7 +163,7 @@ def save_to_csv(results: List[Dict], output_csv: str):
 
 if __name__ == "__main__":
     # 指定路径
-    root_path = "/9950backfile/liguoqi/gsw/HD/SpikeYolo/refs/SpikeYolo_TWN/inference_data_TWN_bn_fused/model/model"
+    root_path = "/9950backfile/liguoqi/gsw/HD/SpikeYolo/refs/inference_data_TWN_bn_fused/model/model"
     output_csv = "/9950backfile/liguoqi/gsw/HD/SpikeYolo/hardware_sim/weight_sparsity_stats.csv"
     
     print("="*80)
