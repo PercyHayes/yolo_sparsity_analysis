@@ -162,8 +162,81 @@ hardware_sim/
 │       └── weights_shape.txt
 ├── weight_sparsity_stats.csv     # Weight statistics output
 ├── lif_sparsity_stats.csv        # LIF statistics output
-└── sparsity_profile_results.csv  # Comprehensive sparsity profile results
+├── sparsity_profile_results.csv  # Comprehensive sparsity profile results
+└── asserts/                      # Documentation images
 ```
+
+## Hardware Architecture
+
+### Tree-Based Grouped Multiplication
+
+The tree-based grouped multiplication unit processes 128 input elements in a hierarchical manner. The following diagram illustrates the tree structure for group size 4 with 2-input adders:
+
+<div  align="center">   
+ <img src="asserts/add_tree.png" width = "400"  alt="Tree-based grouped multiplication structure" align=center />
+ <br><em>Figure 1: Tree-based grouped multiplication structure (128→32→16→8→4→2→1)</em>
+</div>
+
+**Key Features:**
+- **Level 1 (128→32)**: Groups 4 inputs together for multiplication with weights
+  - Each group performs: `sum(weight[i] × input[i])` for i in [0, 3]
+  - Can skip if all inputs are zero OR all weights are zero
+- **Levels 2-6 (32→16→8→4→2→1)**: Use 2-input adders to accumulate results
+  - Each level reduces the number of values by half
+  - Can skip if both inputs are zero
+
+### Convolution Processing in PE Array
+
+The Processing Element (PE) array performs convolution operations by iterating through kernel positions and output positions. The following example demonstrates the processing flow:
+
+**Example Configuration:**
+- Input shape: `[4, 3, 3]` (4 channels, 3×3 spatial size)
+- Kernel shape: `[2, 4, 3, 3]` (2 output channels, 4 input channels, 3×3 kernel)
+- Output shape: `[2, 2, 2]` (2 channels, 2×2 spatial size)
+- PE Array: `4×2` (4 PEs for input channels, 2 PEs for output channels)
+
+**Processing Code:**
+```python
+for k_row in range(kernel_size):
+    for k_col in range(kernel_size):
+        # Load weights for all input/output channel pairs at position (k_row, k_col)
+        # Shape: [out_channels, in_channels]
+        array.load_weight(kernel[:, :, k_row, k_col])
+        
+        for o_h in range(out_height):
+            for o_w in range(out_width):
+                # Extract input patch at position (o_h*stride+k_row, o_w*stride+k_col)
+                # Shape: [in_channels]
+                input_patch = data[:, o_h*stride+k_row, o_w*stride+k_col]
+                
+                # Compute: output[:, o_h, o_w] += array.compute(input_patch)
+                # Each PE computes: sum(weight[out_ch, in_ch] × input[in_ch])
+                out[:, o_h, o_w] += array.compute(input_patch)
+```
+
+![conv](asserts/add_tree-conv.png)
+
+**Processing Flow Explanation:**
+
+1. **Weight Loading**: For each kernel position `(k_row, k_col)`, load weights for all channel pairs
+   - The PE array stores weights in a 2D grid: `PE[out_ch, in_ch] = weight[out_ch, in_ch, k_row, k_col]`
+
+2. **Input Processing**: For each output position `(o_h, o_w)`:
+   - Extract the corresponding input patch from the input feature map
+   - The input patch corresponds to the receptive field: `data[:, o_h*stride+k_row, o_w*stride+k_col]`
+
+3. **Computation**: Each PE performs element-wise multiplication and accumulation
+   - `PE[out_ch, in_ch]` computes: `weight[out_ch, in_ch] × input[in_ch]`
+   - Results are accumulated across input channels using the tree structure
+   - The tree structure enables efficient skipping when inputs or weights are zero
+
+4. **Output Accumulation**: Results from all kernel positions are accumulated to produce the final output
+
+**Optimization Benefits:**
+- **Sparsity Exploitation**: Tree structure allows skipping operations when inputs or weights are zero
+- **Parallel Processing**: Multiple output channels can be computed simultaneously
+- **Efficient Memory Access**: Weights are loaded once per kernel position and reused for all output positions
+
 
 ## Usage Examples
 
@@ -289,11 +362,22 @@ level6 (4 -> 2)       skipped operation rate: 0.07575954861111112
 ## Key Concepts
 
 ### Tree-Based Vector Multiplication
-The tree-based approach groups 128 input elements and performs hierarchical multiplication:
+
+The tree-based approach groups 128 input elements and performs hierarchical multiplication. See [Figure 1: Tree-based grouped multiplication structure](#hardware-architecture) for a visual representation.
+
+**Tree Configurations:**
 - **Group Size 2**: 7 levels (128→64→32→16→8→4→2→1)
 - **Group Size 4**: 3 levels (128→32→8→2→1)
 - **Group Size 8**: 2 levels (128→16→2→1)
-- **Group Size 4 with 2-input Adders**: 6 levels (128→32→16→8→4→2→1)
+- **Group Size 4 with 2-input Adders**: 6 levels (128→32→16→8→4→2→1) - See [Figure 1](#hardware-architecture)
+
+**Processing Flow:**
+1. Input elements are grouped (e.g., 4 elements per group for group size 4)
+2. Each group performs multiplication with corresponding weights
+3. Results are accumulated through a tree of adders
+4. The final result is a single accumulated value
+
+For detailed information about how convolution is processed in the PE array, refer to [Convolution Processing in PE Array](#convolution-processing-in-pe-array) section.
 
 ### Operation Skipping
 The implementation uses smart skipping logic to reduce computation:
